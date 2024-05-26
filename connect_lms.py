@@ -6,7 +6,7 @@ def connect_db():
     # connecting to OUR database - e_commerce_db
     db_name = "library_management_system"
     user = "root"
-    password = "your_password"
+    password = "For85SQL58@PA!04"
     host = "localhost" #127.0.0.1
 
     try:

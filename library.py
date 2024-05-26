@@ -17,12 +17,12 @@ class Library:
         self.users = [] # List to store User objects
         self.authors = [] # List to store Author objects
         self.genres = [] # List to store Genre objects
-
+       
 
     def add_book(self, silent=False):
         try:
             conn = connect_db()
-            cursor = conn.cursor(buffered=True) # Using a buffered cursor to resolve "Unread result found" error
+            cursor = conn.cursor(buffered=True)  # Using a buffered cursor to resolve "Unread result found" error
 
             print("\nPlease enter the following information to add a book:")
             title = input("\nBook title:\n").title().strip()
@@ -31,8 +31,9 @@ class Library:
             # Checking if the author already exists in the library:
             author_obj = None
             for existing_author in self.authors:
-                if existing_author.get_name() == author_name:
+                if existing_author.get_name().lower() == author_name.lower():
                     author_obj = existing_author
+                    print(f"Author {author_name} found in the library.")
                     break
 
             if not author_obj:
@@ -40,7 +41,7 @@ class Library:
                 author_obj = self.add_author(author=author_name, silent=silent)
 
             # Retrieving the author_id from the database:
-            cursor.execute("SELECT id FROM authors WHERE name = %s", (author_name,))
+            cursor.execute("SELECT id FROM authors WHERE LOWER(name) = %s", (author_name.lower(),))
             author_id_result = cursor.fetchone() # This line executes a query to select the id of an author from the authors table where the author's name matches author_name
             if author_id_result:
                 author_id = author_id_result[0] # Extracting id (the first element) from the tuple author_id_result (for example (1,)) and assigning it to author_id
@@ -63,25 +64,25 @@ class Library:
             # Checking if the genre exists:
             genre_obj = None
             for existing_genre in self.genres:
-                if existing_genre.get_name() == genre:
+                if existing_genre.get_name().lower() == genre.lower():
                     genre_obj = existing_genre
                     break
 
             # If genre does not exist, adding the genre:
             if not genre_obj:
                 genre_obj = self.add_genre(genre)
-                cursor.execute("SELECT id FROM genres WHERE genre_name = %s", (genre,))
-                genre_id_result = cursor.fetchone() # The line executes a query to select the id of a genre from the genres table where the genre name matches genre input
+                cursor.execute("SELECT id FROM genres WHERE LOWER(genre_name) = %s", (genre.lower(),))
+                genre_id_result = cursor.fetchone()
                 if genre_id_result:
-                    genre_id = genre_id_result[0] # Extracting the id (the first element) from the tuple genre_id_result (for example (1,)) and assigning it to genre_id
+                    genre_id = genre_id_result[0]
                 else:
                     print(f"Genre '{genre}' not found in the database.")
                     return
             else:
-                cursor.execute("SELECT id FROM genres WHERE genre_name = %s", (genre,))
-                genre_id_result = cursor.fetchone()
+                cursor.execute("SELECT id FROM genres WHERE LOWER(genre_name) = %s", (genre.lower(),))
+                genre_id_result = cursor.fetchone() # The line executes a query to select the id of a genre from the genres table where the genre name matches genre input
                 if genre_id_result:
-                    genre_id = genre_id_result[0]
+                    genre_id = genre_id_result[0] # Extracting the id (the first element) from the tuple genre_id_result (for example (1,)) and assigning it to genre_id
                 else:
                     print(f"Genre '{genre}' not found in the database.")
                     return
@@ -97,7 +98,7 @@ class Library:
                 genre_obj.add_book_to_category(category, new_book)  # Adding book to genre category
                 category_subject = category
 
-                # Adding the category to the database if not already present
+                # Adding the category to the database if not already present:
                 cursor.execute("SELECT id FROM genre_categories WHERE genre_id = %s AND category_subject = %s", (genre_id, category))
                 if cursor.fetchone() is None:
                     cursor.execute("INSERT INTO genre_categories (genre_id, category_subject) VALUES (%s, %s)", (genre_id, category))
@@ -110,7 +111,7 @@ class Library:
                 genre_obj.add_book_to_category(subject, new_book)
                 category_subject = subject
 
-                # Adding the subject to the database if not already present
+                # Adding the subject to the database if not already present:
                 cursor.execute("SELECT id FROM genre_categories WHERE genre_id = %s AND category_subject = %s", (genre_id, subject))
                 if cursor.fetchone() is None:
                     cursor.execute("INSERT INTO genre_categories (genre_id, category_subject) VALUES (%s, %s)", (genre_id, subject))
@@ -136,7 +137,7 @@ class Library:
             if conn and conn.is_connected():
                 cursor.close()
                 conn.close()
-  
+    
 
     def add_user(self):
         try:
@@ -235,77 +236,6 @@ class Library:
                 conn.close()
 
 
-# Only works when the book is in the local dictionary self.books() and that's causing the problem to integrate properly wih the database, so using the approach above instead.
-    # def check_out_book(self):
-    #     try:
-    #         conn = connect_db()
-    #         cursor = conn.cursor(buffered=True)  # Using a buffered cursor to resolve "Unread result found" error
-
-    #         print("\nPlease enter the following information to check out the book:")
-    #         isbn = input("\nBook ISBN (13 digits: example: 978-92-95055-02-5):\n").strip()
-    #         while not re.match(r"^\d{3}-\d{2}-\d{5}-\d{2}-\d{1}$", isbn):
-    #             isbn = input("\nPlease enter the ISBN in the correct format (example: 978-92-95055-02-5):\n").strip()
-
-    #         cursor.execute("SELECT id, availability FROM books WHERE isbn = %s", (isbn,))
-    #         book_result = cursor.fetchone() # Fetching the first row from the result of the executed SQL query and assigning it to the variable book_result
-
-    #         # print(f"Debug: Retrieved book details for ISBN {isbn} is {book_result}")
-
-    #         if book_result:
-    #             book_id, availability = book_result # Unpacking the tuple book_result and assigning the result to book_id and availability
-    #             # print(f"Debug: Interpreted availability for ISBN {isbn} is {availability}")
-    #             if availability == 1:  # If the book is available
-    #                 name = input("\nYour full name:\n").title().strip()
-    #                 library_id = input("\nYour Library ID (example: AA12345):\n").upper().strip()
-    #                 while not re.match(r"^[A-Za-z]{2}\d{5}$", library_id):
-    #                     library_id = input("\nPlease enter your Library ID in the correct format (example: AA12345):\n").upper().strip()
-
-    #                 cursor.execute("SELECT id, name FROM users WHERE library_id = %s", (library_id,))
-    #                 user_result = cursor.fetchone()
-
-    #                 if user_result:
-    #                     user_id, user_name = user_result # Unpacking the tuple user_result and assigning the result to user_id and availability
-    #                     current_user = User(user_name, library_id)
-    #                     print(f"\nWelcome back, {current_user.name} (Library ID: {current_user.get_library_id()})!")
-    #                 else:
-    #                     cursor.execute("INSERT INTO users (name, library_id) VALUES (%s, %s)", (name, library_id))
-    #                     conn.commit()
-    #                     user_id = cursor.lastrowid # Getting the id of the last row that was inserted into the database
-    #                     current_user = User(name, library_id)
-    #                     print(f"\n{current_user.name} (Library ID: {current_user.get_library_id()}) has been added as a new user to the library.")
-
-    #                 if isbn in self.books:
-    #                     if self.books[isbn].is_available():
-    #                         self.books[isbn].borrow_book()
-    #                         cursor.execute("UPDATE books SET availability = 0 WHERE id = %s", (book_id,))
-    #                         cursor.execute("INSERT INTO borrowed_books (user_id, book_id) VALUES (%s, %s)", (user_id, book_id))
-    #                         conn.commit()
-
-    #                         current_user.borrowed_books.append(self.books[isbn])
-    #                         print(f'\nThe book "{self.books[isbn].get_title()}" by {self.books[isbn].get_author()}, ISBN: {isbn}, has been loaned to {current_user.name}, library ID {current_user.get_library_id()}')
-
-    #                         if current_user.get_library_id() not in self.loaned_books:
-    #                             # Initializing an empty dictionary for the user's library ID. Without it, we will have a KeyError if the ID doesn't exist:
-    #                             self.loaned_books[current_user.get_library_id()] = {}
-    #                         self.loaned_books[current_user.get_library_id()][isbn] = self.books[isbn] # Adding the book to the user's library ID dictionary
-    #                     else:
-    #                         print("\nThe book is unavailable!")
-    #                 else:
-    #                     print(f"\nThere is no book with ISBN '{isbn}' in the library!")
-    #             else:
-    #                 print("\nThe book is currently unavailable!")
-    #         else:
-    #             print(f"\nThere is no book with ISBN '{isbn}' in the library!")
-
-    #     except Error as e:
-    #         print(f"\nError: {e}")
-
-    #     finally:
-    #         if conn and conn.is_connected():
-    #             cursor.close()
-    #             conn.close()
-
-
     def check_in_book(self):
         try:
             conn = connect_db()
@@ -374,7 +304,9 @@ class Library:
             conn = connect_db()
             cursor = conn.cursor(buffered=True)
             
-            # Searching for books with titles containing the input:
+            # Searching for books with titles containing the input.
+            # LOWER(b.title): Converts the 'title' column in 'books' to lowercase to ensure case-insensitive comparison.
+            # Using the SQL LIKE operator to search for a pattern:
             query = """
             SELECT b.isbn, b.title, a.name 
             FROM books b 
@@ -495,6 +427,7 @@ class Library:
             if conn and conn.is_connected():
                 cursor.close()
                 conn.close()
+                
 
     def display_all_loaned_books(self):
         try:
@@ -643,30 +576,31 @@ class Library:
                     cursor.close()
                     conn.close()
 
-    
+
     def view_author_details(self):
         author_name = input("\nPlease enter the name of the author you are interested in:\n").title().strip()
-        
+
         try:
             conn = connect_db()
             cursor = conn.cursor(buffered=True)
             
-            # Searching for books by the given author:
+            # Searching for books by the given author.
+            # Using the SQL LIKE operator to search for a pattern:
             query = """
             SELECT b.title, b.isbn 
             FROM books b 
             JOIN authors a ON b.author_id = a.id 
-            WHERE a.name = %s
+            WHERE LOWER(a.name) LIKE %s
             """
-            cursor.execute(query, (author_name,))
+            cursor.execute(query, ('%' + author_name.lower() + '%',))
             books_by_author = cursor.fetchall()  # Fetching all books by the author
 
             if books_by_author:
-                print(f"\nBooks by {author_name}:\n")
+                print(f"\nBooks by authors matching '{author_name}':\n")
                 for title, isbn in books_by_author:
                     print(f"{title}, ISBN: {isbn}")
             else:
-                print(f"\nNo books by '{author_name}' have been found in the library!")
+                print(f"\nNo books by authors matching '{author_name}' have been found in the library!")
 
         except Error as e:
             print(f"\nError: {e}")
