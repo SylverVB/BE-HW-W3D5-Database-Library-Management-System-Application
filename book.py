@@ -37,7 +37,7 @@ class Book:
 
     def borrow_book(self):
         if self.is_available(): # Calling the getter to check if self.__is_available is True
-            self.set_is_available(False) # calling the setter to change availability to False because the book has been checked out
+            self.set_is_available(False) # Calling the setter to change availability to False because the book has been checked out
             return True
         return False
     

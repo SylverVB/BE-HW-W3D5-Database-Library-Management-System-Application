@@ -1,6 +1,7 @@
 import mysql.connector
 from mysql.connector import Error
 
+
 def connect_db():
     # connecting to OUR database - e_commerce_db
     db_name = "library_management_system"
@@ -21,17 +22,9 @@ def connect_db():
         if conn.is_connected(): #returns True if a connection was successfully made
             print("\nSuccessful connection!")
             return conn
-            
 
         # handling any connection errors
     except Error as e:
         print(f"Error: {e}")
 
 connect_db()
-
-    
-
-
-
-
-
